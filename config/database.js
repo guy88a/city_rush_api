@@ -1,46 +1,40 @@
 // ────────────────────────────────────────────────────────────────
 // Imports
 // ────────────────────────────────────────────────────────────────
-require('dotenv').config();
-const fs = require('fs');
-const https = require('https');
-const express = require('express');
-const app = express();
-const { connectToDatabase } = require('./config/database');
+const { MongoClient } = require('mongodb');
 
 // ────────────────────────────────────────────────────────────────
 // Configuration
 // ────────────────────────────────────────────────────────────────
 const MONGO_URL = process.env.MONGO_URL;
-const PORT = 3443;
+const DB_NAME = 'city_rush';
+
+let db;
 
 // ────────────────────────────────────────────────────────────────
-// SSL Certificates (Self-Signed for Local Development)
+// Database Connection
 // ────────────────────────────────────────────────────────────────
-const sslOptions = {
-  key: fs.readFileSync('server.key'),
-  cert: fs.readFileSync('server.cert')
+async function connectToDatabase() {
+  const client = new MongoClient(MONGO_URL);
+
+  await client.connect();
+  console.log('Connected to MongoDB Atlas');
+
+  db = client.db(DB_NAME);
+  return db;
+}
+
+function getDb() {
+  if (!db) {
+    throw new Error('Database not initialized. Call connectToDatabase() first.');
+  }
+  return db;
+}
+
+// ────────────────────────────────────────────────────────────────
+// Exports
+// ────────────────────────────────────────────────────────────────
+module.exports = {
+  connectToDatabase,
+  getDb
 };
-
-// ────────────────────────────────────────────────────────────────
-// Middleware
-// ────────────────────────────────────────────────────────────────
-app.use(express.json());
-
-// ────────────────────────────────────────────────────────────────
-// Routes
-// ────────────────────────────────────────────────────────────────
-app.get('/', (req, res) => {
-  res.json({ message: 'City Rush API over HTTPS, connected to MongoDB' });
-});
-
-// ────────────────────────────────────────────────────────────────
-// Server Start
-// ────────────────────────────────────────────────────────────────
-connectToDatabase().then(() => {
-  https.createServer(sslOptions, app).listen(PORT, () => {
-    console.log(`HTTPS server running at https://localhost:${PORT}`);
-  });
-}).catch(err => {
-  console.error('Failed to connect to MongoDB:', err);
-});
