@@ -4,3 +4,12 @@ npm-debug.log
 dist/
 build/
 .DS_Store
+
+# SSL certificates (local dev only)
+server.key
+server.cert
+*.key
+*.cer
+*.crt
+*.pem
+*.pfx
