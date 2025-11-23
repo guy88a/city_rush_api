@@ -1,27 +1,38 @@
+// src/services/user.service.js
 const { getDb } = require('../config/database');
 const { ObjectId } = require('mongodb');
+const Flow = require('../utils/flow');
 
 module.exports.getById = async function (id) {
   const db = getDb();
   const users = db.collection('users');
 
-  let user;
-  try {
-    user = await users.findOne(
-      { _id: new ObjectId(id) },
-      { projection: { password: 0 } }
-    );
-  } catch (err) {
-    return { ok: false, status: 400, message: 'Invalid user ID' };
-  }
+  // Create flow with context
+  const flow = Flow.start({ id, user: null });
 
-  if (!user) {
-    return { ok: false, status: 404, message: 'User not found' };
-  }
+  return flow
+    .check(id, 'User ID is required', 400)
+    .step(ctx => {
+      try {
+        ctx.objectId = new ObjectId(ctx.id);
+      } catch (err) {
+        return { error: 'Invalid user ID', status: 400 };
+      }
+    })
+    .step(async ctx => {
+      ctx.user = await users.findOne(
+        { _id: ctx.objectId },
+        { projection: { password: 0 } }
+      );
 
-  return {
-    ok: true,
-    status: 200,
-    data: { user }
-  };
+      if (!ctx.user) {
+        return { error: 'User not found', status: 404 };
+      }
+    })
+    .done(ctx => ({
+      user: ctx.user
+    }));
+
+
+
 };
