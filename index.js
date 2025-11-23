@@ -6,7 +6,7 @@ const fs = require('fs');
 const https = require('https');
 const express = require('express');
 const app = express();
-const { connectToDatabase } = require('./config/database');
+const { connectToDatabase } = require('./src/config/database');
 
 // ────────────────────────────────────────────────────────────────
 // Configuration
@@ -30,8 +30,7 @@ app.use(express.json());
 // ────────────────────────────────────────────────────────────────
 // Routes
 // ────────────────────────────────────────────────────────────────
-app.use('/auth', require('./routes/auth.routes'));
-app.use('/user', require('./routes/user.routes'));
+app.use('/api', require('./src/routes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'City Rush API over HTTPS, connected to MongoDB' });
