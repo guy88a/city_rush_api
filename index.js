@@ -31,6 +31,7 @@ app.use(express.json());
 // Routes
 // ────────────────────────────────────────────────────────────────
 app.use('/auth', require('./routes/auth.routes'));
+app.use('/user', require('./routes/user.routes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'City Rush API over HTTPS, connected to MongoDB' });

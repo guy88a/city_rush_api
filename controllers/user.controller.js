@@ -1,18 +1,39 @@
 // ────────────────────────────────────────────────────────────────
 // Imports
 // ────────────────────────────────────────────────────────────────
-const express = require('express');
-const router = express.Router();
-const { registerUser, loginUser, logoutUser } = require('../controllers/auth.controller');
+const { getDb } = require('../config/database');
+const { ObjectId } = require('mongodb');
 
 // ────────────────────────────────────────────────────────────────
-// Routes
+// Get My User (profile)
 // ────────────────────────────────────────────────────────────────
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.post('/logout', logoutUser);
+async function getMyUser(req, res) {
+  try {
+    const db = getDb();
+    const usersCollection = db.collection('users');
+
+    const userId = req.user.id;
+
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.json({ user });
+
+  } catch (error) {
+    console.error('/user/me error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
 
 // ────────────────────────────────────────────────────────────────
 // Exports
 // ────────────────────────────────────────────────────────────────
-module.exports = router;
+module.exports = {
+  getMyUser
+};
