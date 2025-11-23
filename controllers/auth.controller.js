@@ -2,6 +2,7 @@
 // Imports
 // ────────────────────────────────────────────────────────────────
 const { getDb } = require('../config/database');
+const bcrypt = require('bcrypt');
 
 // ────────────────────────────────────────────────────────────────
 // Controllers
@@ -14,11 +15,47 @@ async function registerUser(req, res) {
     // Extract data from request body
     const { username, email, password } = req.body;
 
-    // Temporary placeholder response
-    // (We will implement validation + hashing next step)
-    res.json({
-      message: 'Register endpoint reached',
-      received: { username, email, password }
+    // Basic validation
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Missing username, email, or password' });
+    }
+
+    // Check if user already exists
+    const existingUser = await usersCollection.findOne({
+      $or: [
+        { username: username },
+        { email: email }
+      ]
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user object
+    const newUser = {
+      username,
+      email,
+      password: hashedPassword,
+      type: 'registered',
+      createdAt: new Date(),
+      lastLogin: new Date()
+    };
+
+    // Insert into database
+    await usersCollection.insertOne(newUser);
+
+    return res.json({
+      message: 'User registered successfully',
+      user: {
+        username,
+        email,
+        type: 'registered',
+        createdAt: new Date()
+      }
     });
 
   } catch (error) {
