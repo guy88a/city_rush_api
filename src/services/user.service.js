@@ -33,6 +33,4 @@ module.exports.getById = async function (id) {
       user: ctx.user
     }));
 
-
-
 };
